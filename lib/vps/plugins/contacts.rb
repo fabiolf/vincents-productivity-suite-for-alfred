@@ -77,7 +77,7 @@ module VPS
           name = supported_entity_type.entity_type_name + 's'
           OptionParser.new do |parser|
             parser.banner = "List all available #{name} in this area"
-            parser.separator "Usage: #{name} list"
+            parser.separator "Usage: #{supported_entity_type.entity_type_name} list"
           end
         end
 

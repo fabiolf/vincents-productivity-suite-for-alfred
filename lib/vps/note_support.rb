@@ -208,10 +208,15 @@ module VPS
       end
 
       def create_note(context)
+        # puts "1"
         template_context = create_template_context(context)
+        # puts "1.5"
         filename_template = template(context, :filename)
+        # puts "2"
         note = EntityType::Note.new do |n|
+          # puts "before n.title"
           n.title = template(context, :title).render_template(template_context).strip
+          # puts "before n.id"
           n.id = if filename_template.nil?
                    n.title
                  else
@@ -222,11 +227,15 @@ module VPS
           n.tags = template(context, :tags)
                      .map { |t| t.render_template(template_context).strip }
         end
+        # puts "before create_or_find"
         context.create_or_find(note, EntityType::Note)
+        # puts "after create_or_find"
       end
 
       def create_template_context(context)
+        # puts "before"
         query = context.arguments.join(' ')
+        # puts "query #{query}"
         date = DateTime.now
         {
           'year' => date.strftime('%Y'),
@@ -239,7 +248,9 @@ module VPS
       end
 
       def template(context, symbol)
+        # puts "template"
         templates = context.configuration[:templates]
+        # puts "filename [#{templates[template_set][symbol]}]"
         templates[template_set][symbol] || templates[:default][symbol]
       end
     end
@@ -299,17 +310,37 @@ module VPS
       end
 
       def create_template_context(context)
+        # puts "create template note from ProjectTemplate"
         project = context.load_instance
+        # puts project.is_a?(VPS::EntityType::Project)
+        # puts project.is_a?(VPS::EntityType::Note)
         template_context = super
-        template_context['input'] = project.name
-        template_context['name'] = project.name
+        if project.is_a?(VPS::EntityType::Note)
+          template_context['input'] = project.title
+          template_context['name'] = project.title
+        else
+          template_context['input'] = project.name
+          template_context['name'] = project.name
+        end
         template_context
       end
 
       def template(context, symbol)
+        # puts "Project Template template"
         project = context.load_instance
-        custom_config = project.config[application] || {}
-        custom_config[symbol.to_s] || super(context, symbol)
+        # puts "before custom_config [#{project.id}][#{project.name}][#{project.config}]"
+        # custom_config = if project.config
+        #                   project.config[application]
+        #                 else
+        #                   {}
+        #                 end
+        if project.is_a?(VPS::EntityType::Note)
+          super(context,symbol)
+        else
+          custom_config = project.config[application] || {}
+          # puts "before second custom_config"
+          custom_config[symbol.to_s] || super(context, symbol)
+        end
       end
     end
 
